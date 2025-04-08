@@ -45,10 +45,10 @@ class compAdmin(admin.ModelAdmin):
 admin.site.register(comp,compAdmin)
 
 #登录时/后台主界面显示的名称
-admin.site.site_header = '大学生就业信息系统后台'
-admin.site.site_header = '大学生就业信息系统后台'
+admin.site.site_header = '基于Python的就业辅助系统'
+admin.site.site_header = '基于Python的就业辅助系统'
 #title显示的名称
-admin.site.site_title = '就业平台管理后台'
+admin.site.site_title = '就业就业辅助系统管理后台'
 
 
 

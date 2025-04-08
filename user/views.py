@@ -2,12 +2,16 @@ from django.shortcuts import render,redirect,render_to_response
 from django.http import HttpResponse
 from django import forms
 import pandas as pd
+import os
 # Create your views here.
 from user.models import *
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate,login,logout
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
+
+# Define the base directory for the project
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 #核心算法函数
 def forest(list,df):
@@ -51,22 +55,38 @@ def xinzi_predict(request):
             list1.append(java1)
             list1.append(spring1)
             list1.append(sql1)
-            df = pd.read_csv('C:\\Users\\独为我唱\\Desktop\\data_sum\\updata_java_ceshi222.csv', encoding='gbk')
+            try:
+                df = pd.read_csv(os.path.join(BASE_DIR, 'data_sum', 'updata_java_ceshi222.csv'), encoding='gbk')
+            except Exception as e:
+                print(f"Error loading CSV: {e}")
+                return render(request, 'predict_xinzi.html', {'error_message': f'无法加载数据文件: {e}'})
         elif a == 'Python开发工程师':
             list1.append(python1)
             list1.append(linux1)
             list1.append(spider1)
-            df = pd.read_csv('C:\\Users\\独为我唱\\Desktop\\data_sum\\updata_python_ceshi.csv', encoding='gbk')
+            try:
+                df = pd.read_csv(os.path.join(BASE_DIR, 'data_sum', 'updata_python_ceshi.csv'), encoding='gbk')
+            except Exception as e:
+                print(f"Error loading CSV: {e}")
+                return render(request, 'predict_xinzi.html', {'error_message': f'无法加载数据文件: {e}'})
         elif a == 'web前端开发师':
             list1.append(html1)
             list1.append(cssjs1)
             list1.append(vue1)
-            df = pd.read_csv('C:\\Users\\独为我唱\\Desktop\\data_sum\\updata_web_ceshi.csv', encoding='gbk')
+            try:
+                df = pd.read_csv(os.path.join(BASE_DIR, 'data_sum', 'updata_web_ceshi.csv'), encoding='gbk')
+            except Exception as e:
+                print(f"Error loading CSV: {e}")
+                return render(request, 'predict_xinzi.html', {'error_message': f'无法加载数据文件: {e}'})
         elif a == '算法工程师':
             list1.append(jiqi1)
             list1.append(tuxiang1)
             list1.append(C1)
-            df = pd.read_csv('C:\\Users\\独为我唱\\Desktop\\data_sum\\updata_suanfa_ceshi.csv', encoding='gbk')
+            try:
+                df = pd.read_csv(os.path.join(BASE_DIR, 'data_sum', 'updata_suanfa_ceshi.csv'), encoding='gbk')
+            except Exception as e:
+                print(f"Error loading CSV: {e}")
+                return render(request, 'predict_xinzi.html', {'error_message': f'无法加载数据文件: {e}'})
         city = city.split(',')
         list1.extend(city)
         demand = demand.split(',')
@@ -142,7 +162,11 @@ def zhuce(request):
 
 #总的岗位数量的饼图和柱状图
 def pie_bar_test(request):
-    df = pd.read_csv('C:\\Users\\独为我唱\\Desktop\\data_sum\\all.csv', encoding='gbk' , low_memory=False,converters={'work_demand':str})
+    try:
+        df = pd.read_csv(os.path.join(BASE_DIR, 'data_sum', 'all.csv'), encoding='gbk', low_memory=False, converters={'work_demand':str})
+    except Exception as e:
+        print(f"Error loading CSV: {e}")
+        return render(request, 'test.html', {'error_message': f'无法加载数据文件: {e}'})
     dd = df.loc[df['job_name'] != '其他职业']
     pie_data_index = list(dd['job_name'].value_counts().index)
     pie_data =  list(dd['job_name'].value_counts())
@@ -169,7 +193,11 @@ def abi_class(list):
     ll = ll[0:6]  # 取出list前6个值
     return ll
 def test_pic(request):
-    df = pd.read_csv('C:\\Users\\独为我唱\\Desktop\\data_sum\\all.csv', encoding='gbk' , low_memory=False,converters={'work_demand':str})
+    try:
+        df = pd.read_csv(os.path.join(BASE_DIR, 'data_sum', 'all.csv'), encoding='gbk', low_memory=False, converters={'work_demand':str})
+    except Exception as e:
+        print(f"Error loading CSV: {e}")
+        return render(request, '../templates/index.html', {'error_message': f'无法加载数据文件: {e}'})
     # 取出每个城市及其岗位数
     job = list(df['company_locale'].value_counts().index)
     job1 = list(df['company_locale'].value_counts())
@@ -204,48 +232,93 @@ def test_pic(request):
         abi_snum.append(dict)
 
     #取出java、python和web在各地区薪资图
-    dff = df.loc[df['job_name'] == 'Java']
-    grouped2 = dff.groupby([df['job_name'], df['company_locale']])
-    a = grouped2['job_salary'].mean()
-    a = a.map(lambda x: int(x))
-    java_cities_price = a.values.tolist()
+    try:
+        dff = df.loc[df['job_name'] == 'Java']
+        if not dff.empty:
+            grouped2 = dff.groupby([df['job_name'], df['company_locale']])
+            a = grouped2['job_salary'].mean()
+            a = a.map(lambda x: int(float(x)) if pd.notnull(x) else 0)
+            java_cities_price = a.values.tolist()
+        else:
+            java_cities_price = []
+    except Exception as e:
+        print(f"Error processing Java data: {e}")
+        java_cities_price = []
 
-    ddff= df.loc[df['job_name'] == 'Python']
-    grouped2 = ddff.groupby([df['job_name'], df['company_locale']])
-    a = grouped2['job_salary'].mean()
-    a = a.map(lambda x: int(x))
-    python_cities_price = a.values.tolist()
+    try:
+        ddff = df.loc[df['job_name'] == 'Python']
+        if not ddff.empty:
+            grouped2 = ddff.groupby([df['job_name'], df['company_locale']])
+            a = grouped2['job_salary'].mean()
+            a = a.map(lambda x: int(float(x)) if pd.notnull(x) else 0)
+            python_cities_price = a.values.tolist()
+        else:
+            python_cities_price = []
+    except Exception as e:
+        print(f"Error processing Python data: {e}")
+        python_cities_price = []
 
-    ddd= df.loc[df['job_name'] == 'web']
-    grouped2 = ddd.groupby([df['job_name'], df['company_locale']])
-    a = grouped2['job_salary'].mean()
-    a = a.map(lambda x: int(x))
-    web_cities_price = a.values.tolist()
+    try:
+        ddd = df.loc[df['job_name'] == 'web']
+        if not ddd.empty:
+            grouped2 = ddd.groupby([df['job_name'], df['company_locale']])
+            a = grouped2['job_salary'].mean()
+            a = a.map(lambda x: int(float(x)) if pd.notnull(x) else 0)
+            web_cities_price = a.values.tolist()
+        else:
+            web_cities_price = []
+    except Exception as e:
+        print(f"Error processing web data: {e}")
+        web_cities_price = []
 
-    dfdf = df.loc[df['job_name'] == '大数据']
-    grouped2 = dfdf.groupby([df['job_name'], df['company_locale']])
-    a = grouped2['job_salary'].mean()
-    a = a.map(lambda x: int(x))
-    hadoop_cities_price = a.values.tolist()
+    try:
+        dfdf = df.loc[df['job_name'] == '大数据']
+        if not dfdf.empty:
+            grouped2 = dfdf.groupby([df['job_name'], df['company_locale']])
+            a = grouped2['job_salary'].mean()
+            a = a.map(lambda x: int(float(x)) if pd.notnull(x) else 0)
+            hadoop_cities_price = a.values.tolist()
+        else:
+            hadoop_cities_price = []
+    except Exception as e:
+        print(f"Error processing 大数据 data: {e}")
+        hadoop_cities_price = []
 
     #得到招聘岗位数排名前八的公司，返回元素为字符串的列表
-    a = list(df['company_name'].value_counts().index)
-    b = list(df['company_name'].value_counts())
-    ll = []
-    for i in range(0, 10):
-        c = str(i + 1) + '  ' + a[i] + '  ' + str(b[i]) + '个岗位'
-        ll.append(c)
+    try:
+        a = list(df['company_name'].value_counts().index)
+        b = list(df['company_name'].value_counts())
+        ll = []
+        # 确保有足够的数据
+        for i in range(0, min(10, len(a))):
+            c = str(i + 1) + '  ' + a[i] + '  ' + str(b[i]) + '个岗位'
+            ll.append(c)
+    except Exception as e:
+        print(f"Error processing company ranking: {e}")
+        ll = []
 
     #取出不同岗位类型平均薪资
-    gp = df.groupby('demand')
-    a = gp['job_salary'].mean().sort_values(ascending=False)
-    job_price_index = a.index.tolist()
-    job_price = a.values.tolist()
-    for i in range(len(job_price)):
-        job_price[i] = int(job_price[i])
+    try:
+        if 'demand' in df.columns:
+            gp = df.groupby('demand')
+            a = gp['job_salary'].mean().sort_values(ascending=False)
+            job_price_index = a.index.tolist()
+            job_price = a.values.tolist()
+            for i in range(len(job_price)):
+                if pd.notnull(job_price[i]):
+                    job_price[i] = int(float(job_price[i]))
+                else:
+                    job_price[i] = 0
+        else:
+            job_price_index = []
+            job_price = []
+    except Exception as e:
+        print(f"Error processing salary averages: {e}")
+        job_price_index = []
+        job_price = []
     # job_price = np.trunc(job_price)              #对list每个元素进行取整
 
-    return render(request, '../templates/index.html', {"job": job,
+    return render(request, 'index.html', {"job": job,
                                                        "job1": job1,
                                                        "data2":data2,
                                     "job_price_index":job_price_index,
@@ -258,7 +331,3 @@ def test_pic(request):
                                     "hadoop_cities_price":hadoop_cities_price,
                                     "ll":ll,
                                                        })
-
-
-
-
